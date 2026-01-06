@@ -1,65 +1,150 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Levin Eyecare | Contact Lens Catalog (v1)</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <style>
-    :root { font-family: Arial, sans-serif; }
-    body { margin: 18px; }
-    h1 { margin: 0 0 6px; font-size: 22px; }
-    .sub { color: #444; margin: 0 0 14px; }
-    .bar { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin: 12px 0 16px; }
-    label { font-size: 12px; color: #333; display: block; margin-bottom: 4px; }
-    input, select {
-  padding: 8px;
-  min-width: 220px;
-  border: 2px solid #333;
-  border-radius: 4px;
-  background-color: #ffffff;
-  color: #000000;
-  font-size: 14px;
-  line-height: 1.2;
-  z-index: 10;
-  position: relative;
-  pointer-events: auto;
-  opacity: 1;
-  caret-color: #000;
-}
-    .small { min-width: 120px; }
-    .pill { display: inline-block; padding: 4px 8px; border-radius: 999px; background: #f0f0f0; font-size: 12px; margin-left: 8px;}
-    .status { margin: 10px 0; font-size: 13px; color: #555; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
-    th { background: #fafafa; position: sticky; top: 0; z-index: 1; }
-    .right { text-align: right; white-space: nowrap; }
-    .muted { color: #666; font-size: 12px; }
-    .good { font-weight: 700; }
-    .diffpos { color: #0a6; font-weight: 700; }
-    .diffneg { color: #b00; font-weight: 700; }
-    .footer { margin-top: 14px; font-size: 12px; color: #666; }
-    .note { background: #fff7e6; border: 1px solid #ffe1a3; padding: 10px; border-radius: 8px; margin: 10px 0 14px; }
-    .btn { padding: 8px 10px; cursor: pointer; }
-  </style>
+<title>Levin Eyecare | Contact Lens Catalog</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 20px;
+    background: #ffffff;
+    color: #000000;
+  }
+
+  h1 {
+    margin-bottom: 4px;
+  }
+
+  .sub {
+    margin-bottom: 16px;
+    color: #444;
+  }
+
+  .note {
+    background: #fff7e6;
+    border: 1px solid #ffd27a;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  label {
+    font-size: 12px;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 12px;
+  }
+
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    vertical-align: top;
+  }
+
+  th {
+    background: #f3f3f3;
+    position: sticky;
+    top: 0;
+  }
+
+  .right {
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .good {
+    font-weight: bold;
+  }
+
+  .pos {
+    color: #0a7a2f;
+    font-weight: bold;
+  }
+
+  .neg {
+    color: #b00020;
+    font-weight: bold;
+  }
+
+  .status {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #555;
+  }
+</style>
 </head>
 
 <body>
-  <h1>Contact Lens Catalog (v1)</h1>
-  <p class="sub">
-    Central catalog with instant pricing comparison vs <b>1-800 Contacts</b>
-    <span class="pill">Levin Eyecare</span>
-  </p>
 
-  <div class="note">
-    <b>How this works:</b> Search for a lens → choose <b>New</b> or <b>Existing</b> wearer →
-    set annual boxes (default 8) → see <b>Levin net cost</b> vs <b>competitor net cost</b>.
-    <div class="muted">
-      Assumes rebates are annual totals. Update the Google Sheet and this page updates automatically.
-    </div>
+<h1>Contact Lens Catalog (v1.1 RESET)</h1>
+<div class="sub">Central pricing + rebate comparison vs 1-800 Contacts</div>
+
+<div class="note">
+<b>How this works:</b><br>
+Search a lens → select New or Existing wearer → enter annual boxes →
+compare Levin Eyecare pricing vs 1-800 Contacts.
+</div>
+
+<div class="controls">
+
+  <div>
+    <label>Search</label>
+    <input id="q"
+      placeholder="Acuvue, Biofinity, Dailies"
+      style="width:300px;height:40px;padding:8px;border:2px solid #000;border-radius:4px;background:#fff;color:#000;font-size:14px;-webkit-text-fill-color:#000;caret-color:#000;"
+    >
   </div>
 
-  <div class="bar">
-    <div>
-      <label for="q">Search (Brand, Lens Name, Type, Modality)</label>
-      <input id="q" placeho
+  <div>
+    <label>Rebate Type</label>
+    <select id="wearer"
+      style="width:220px;height:40px;padding:8px;border:2px solid #000;border-radius:4px;background:#fff;color:#000;font-size:14px;">
+      <option value="new">New wearer</option>
+      <option value="existing">Existing wearer</option>
+    </select>
+  </div>
+
+  <div>
+    <label>Annual Boxes</label>
+    <input id="annualBoxes" type="number" value="8" min="0"
+      style="width:120px;height:40px;padding:8px;border:2px solid #000;border-radius:4px;background:#fff;color:#000;font-size:14px;-webkit-text-fill-color:#000;caret-color:#000;"
+    >
+  </div>
+
+</div>
+
+<div class="status" id="status">Loading catalog…</div>
+
+<table>
+<thead>
+<tr>
+  <th>Lens</th>
+  <th>Specs</th>
+  <th class="right">Levin / Box</th>
+  <th class="right">1-800 / Box</th>
+  <th class="right">Levin Net</th>
+  <th class="right">1-800 Net</th>
+  <th class="right">Savings</th>
+</tr>
+</thead>
+<tbody id="rows"></tbody>
+</table>
+
+<script>
+const CSV_URL =
+"ht
