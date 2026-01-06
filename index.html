@@ -147,4 +147,119 @@ compare Levin Eyecare pricing vs 1-800 Contacts.
 
 <script>
 const CSV_URL =
-"ht
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vSgUS_6mZIxKMPAT5xSAuzKELghIeOsySrfpb3R-h0mXyaPHM3d9xXT4aWr5uApY7XFdysA5jg28g2c/pub?gid=0&single=true&output=csv";
+
+const q = document.getElementById("q");
+const wearer = document.getElementById("wearer");
+const boxesInput = document.getElementById("annualBoxes");
+const rowsEl = document.getElementById("rows");
+const statusEl = document.getElementById("status");
+
+let data = [];
+
+function money(n){
+  if(!isFinite(n)) return "—";
+  return "$" + n.toFixed(2);
+}
+
+function num(v){
+  const s = String(v ?? "").replace(/[$,]/g,"").trim();
+  if(s === "") return NaN;
+  const n = Number(s);
+  return isFinite(n) ? n : NaN;
+}
+
+// Robust CSV row split that handles quoted commas
+function parseCSV(text){
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  if(lines.length < 2) throw new Error("CSV appears empty or missing rows.");
+
+  const splitCSVLine = (line) => {
+    const out = [];
+    let cur = "", inQuotes = false;
+    for (let i = 0; i < line.length; i++){
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && line[i+1] === '"') { cur += '"'; i++; continue; }
+        inQuotes = !inQuotes; continue;
+      }
+      if (!inQuotes && ch === ',') { out.push(cur); cur = ""; continue; }
+      cur += ch;
+    }
+    out.push(cur);
+    return out.map(x => x.trim());
+  };
+
+  const headers = splitCSVLine(lines[0]).map(h => h.trim());
+  if(!headers.includes("Brand") || !headers.includes("LensName")) {
+    throw new Error("CSV headers do not include expected columns (Brand, LensName). Check your sheet header row.");
+  }
+
+  return lines.slice(1).map(line => {
+    const values = splitCSVLine(line);
+    const obj = {};
+    headers.forEach((h,i)=> obj[h] = (values[i] ?? "").trim());
+    return obj;
+  });
+}
+
+function render(){
+  const term = q.value.toLowerCase();
+  const boxes = Number(boxesInput.value || 0);
+  rowsEl.innerHTML = "";
+
+  const filtered = data.filter(r =>
+    ([r.Brand, r.LensName, r.Modality, r.Type].join(" ")).toLowerCase().includes(term)
+  );
+
+  for(const r of filtered){
+    const lp = num(r.RetailPerBox);
+    const cp = num(r.CompetitorPerBox);
+    const lr = num(wearer.value==="new" ? r.RebateAnnualNew : r.RebateAnnualExisting);
+    const cr = num(wearer.value==="new" ? r.CompetitorRebateNew : r.CompetitorRebateExisting);
+
+    const levinNet = (isFinite(lp) ? lp * boxes : NaN) - (isFinite(lr) ? lr : 0);
+    const compNet  = (isFinite(cp) ? cp * boxes : NaN) - (isFinite(cr) ? cr : 0);
+    const diff = compNet - levinNet;
+
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td><b>${r.Brand || ""}</b><br>${r.LensName || ""}</td>
+      <td>BC ${(r["Base Curve"] || r.BaseCurve || "")} • DIA ${(r.Diameter || "")}</td>
+      <td class="right">${money(lp)}</td>
+      <td class="right">${money(cp)}</td>
+      <td class="right good">${money(levinNet)}</td>
+      <td class="right good">${money(compNet)}</td>
+      <td class="right ${isFinite(diff) && diff>=0 ? 'pos':'neg'}">${money(diff)}</td>
+    `;
+    rowsEl.appendChild(tr);
+  }
+
+  statusEl.textContent = `Loaded ${data.length} rows. Showing ${filtered.length}.`;
+}
+
+async function load(){
+  try{
+    statusEl.textContent = "Loading catalog… (fetching CSV)";
+    const res = await fetch(CSV_URL, { cache: "no-store" });
+    if(!res.ok) throw new Error(`Fetch failed: HTTP ${res.status}`);
+
+    const text = await res.text();
+    statusEl.textContent = `CSV downloaded (${text.length} chars). Parsing…`;
+
+    data = parseCSV(text);
+    statusEl.textContent = `Parsed ${data.length} lenses. Rendering…`;
+    render();
+  } catch(e){
+    statusEl.textContent = `ERROR: ${e.message}`;
+    console.error(e);
+  }
+}
+
+q.addEventListener("input", render);
+wearer.addEventListener("change", render);
+boxesInput.addEventListener("input", render);
+
+load();
+</script>
+
